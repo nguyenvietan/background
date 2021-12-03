@@ -1,0 +1,168 @@
+
+												OPERATING SYSTEMS
+												*****************
+
+PART I:
+	1. Intro
+	2. OS structures
+
+PART II:
+	3. Processes
+	4. Threads
+	5. Process Synchronization
+	-6. CPU Scheduling
+	7. Deadlocks
+
+PART III:
+	8. Main Memory
+	9. Virtual Memory
+------------------------------
+
+6. CPU Scheduling
+
+	DEFINITION: a task of selecting a waiting process from the ready queue and allocate CPU to it
+	OBJECTIVES: maximize CPU utilization, always have a process running on the CPU at any time
+
+	PREEMPTIVE vs. NON-PREEMPTIVE:
+		preemptive: a process can be taken away from CPU for another while running
+		non-preemptive: ><	
+	
+	ALGORITHMS:
+
+		Criteria:
+			%CPU utilization
+			Throughput: no. processes completed / time unit
+			Turnaround time: wating time in ready queue + CPU processing time + I/O time
+			Waiting time: time for a process waiting in the ready queue
+			Response time: time from submisstion of a process until the first response
+
+		+ FIFS (First Come, First Serve):
+											|				P1				|	P2	|	P3	|
+				++ simple
+				-- non-preemtive: a process might keep the CPU over an extended period 
+									-> bad if all processes need to share CPU at regular intervals
+		+ SJF (Shortest Job First):
+											|	P2	|	P3	|				P1				|
+				predict the next shortest-CPU-burst task based on current and previous bursts
+						t(n+1) = alpha*T(n) + (1-alpha)*t(n), T(n): current, t(n): past history
+				++ minimize waiting time
+				-- difficult to predict
+		+ Round-Robin scheduling: quantum time >> contex switch time
+		+ Priority scheduling: assing each process a priority level (eg. inverted (predicted) CPU burst)	
+				-- low-priority process: starvation -> solution: Aging (++priority over time)
+		++ Multi-level scheduling: Round-Robin + Priority scheduling
+			(make it easier for round-robin as it needs O(n) search to find the highest-priority job)
+
+			priority = 0:	| T0 | T1 | T2 | T3 | T4 |					
+			priority = 1:	| T5 | T6 | T7 |					
+			priority = 2:	| T8 |                   T9 |				
+			...
+			priority = n:	| Tx | Ty | Tz |
+		++ Multi-level feedback queue scheduling
+			--multi-level scheduling is inflexible, one process might not be process because of low priority
+			-> allow migrating processes between different queues
+---
+	context switch?
+===========================================================================================================
+
+									PART 3: PROCESS SYNCRONIZATION
+
+Chapter 6. Syncronization tools
+	
+		+ critical problem: how processes can syncronize to share data?
+		+ race condition: outcome of an execution depends on the order of accessing data
+			eg. count = 5; two processes execute simultaneously: P1 (count++), P2(count--);
+				registers++/--; final: count = register (4 or 6), depends on the execution order
+
+		+ Solution critical problems:
+			+ SOFTWARE:
+				lock = false
+				while (true) {
+					while(look == true); // spinlock -> waste CPU cycles
+						/* critical section */
+					lock = false;
+						/* remainder section */
+				}
+				-> problem: multiple processes can enter the critical section at the same time as they are all read lock = false at the begining
+				-> need for hardware solution such that these processes must execute sequentially
+			+ HARDWARE: test_and_set(), compare_and_swap(), atomic variables
+				-> these instructions are executed atomically. it means if two processes execute one instruction (eg. test_and_set()) at the same time, they must be then executed sequentially in some arbitrary order
+				---
+				boolean test_and_set(boolean *target) {
+					boolean rv = *target;
+					*target = true;
+					return rv;
+				}
+				---
+				lock = false
+				while (true) {
+					while(test_and_set(&look) == true); // -> atomically
+						/* critical section */
+					lock = false;
+						/* remainder section */
+				}		
+				---
+			=> the hardware support are employed for higer level of sync tool implementation: mutex lock, semaphore
+			(1) MUTEX LOCKS: acquire(), release(): only boolean value
+			(2) SEMAPHORES: S: integer value -> multiple sync purposes, eg. no. processes can use at the same time, or no. processes are waiting for
+				---
+				int S
+				wait(S) {
+					while(S <= 0); // busy waiting -> solution: put into sleep
+					S--;
+				}
+				signal(S) {
+					S++;	// wake up one sleeping process
+				}			
+				---
+			(3) MONITOR: a high level of sync tool // TODO: find out more
+		
+		+ Problems with sync tools:
+			+ Deadlock: two processes use two semaphores S, Q; each process waiting for the other's signal
+						init: S = Q = 1
+					------------------------
+					P1				P2
+					wait(S)			wait(Q) // S = 0, Q = 0
+		  block	->	wait(Q)	   x	wait(S)	<- block, waiting for S, Q > 0 (signal)
+					.				.						
+					.				.			
+					signal(S)		signal(Q)
+					signal(Q)		signal(S)
+					-------------------------
+			+ Priority Inversion: 3 processes with priorities: L < M < H
+				eg. L is holding the lock, and H is waiting for L to complete. but in M now becomes runnable, it can preempting L -> solution: L temporarily inherite H's priority to prevent M from acquiring the lock
+-----------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+		
+	
+
+
+
+
+
